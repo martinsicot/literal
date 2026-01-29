@@ -1,0 +1,91 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pytest:*)",
+      "Bash(isort:*)",
+      "Bash(black:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git pull:*)",
+      "Bash(python manage.py:*)",
+      "Bash(cat:*)",
+      "Bash(python -m pytest tests/core/services/test_status_manager.py -v)",
+      "Bash(python -m pytest tests/core/services/test_status_manager.py::StatusManagerTest::test_document_status_change_to_approved_completes_pdt -v -s)",
+      "Bash(python -m pytest tests/core/services/test_status_manager.py::StatusManagerTest::test_handle_document_created_updates_pdt_from_completed_to_review -v -s)",
+      "Bash(python -m pytest tests/core/models/test_procedure_review_activity.py -v)",
+      "Bash(python -m pytest tests/core/test_signals.py -v)",
+      "Bash(python -m pytest tests/** -v)",
+      "Bash(python -m pytest tests/**)",
+      "Bash(python -m pytest tests/api/back_office/test_procedure_review_activities.py -v)",
+      "Bash(python -m pytest tests/api/back_office/test_procedure_review_activities.py::ProcedureReviewActivitiesAPITest::test_update_activity_is_resolved_false -v)",
+      "Bash(python -m pytest tests/api/back_office/test_procedure_review_activities.py::ProcedureReviewActivitiesAPITest::test_update_activity_without_is_resolved_field -v)",
+      "Bash(python -m pytest tests/api/back_office/test_reviewer_notifications.py -v)",
+      "Bash(python -m pytest tests/ -v --tb=short)",
+      "Bash(python -m pytest tests/core/models/test_person_access_token.py -v --tb=long)",
+      "Bash(python -m pytest tests/api/front_office/test_authentication.py -v --tb=long -x)",
+      "Bash(python:*)",
+      "Bash(sed:*)",
+      "Bash(aws ecr describe-images:*)",
+      "Bash(aws ec2 describe-addresses:*)",
+      "Bash(aws ec2 describe-instances:*)",
+      "Bash(aws elbv2 describe-load-balancers:*)",
+      "Bash(aws ec2:*)",
+      "Bash(aws ecs list-clusters:*)",
+      "Bash(aws ecs list-tasks:*)",
+      "Bash(aws ecs describe-services:*)",
+      "Bash(aws ecs describe-tasks:*)",
+      "Bash(aws logs describe-log-groups:*)",
+      "mcp__notionMCP__search",
+      "mcp__notionMCP__fetch",
+      "mcp__notionMCP__notion-create-pages",
+      "mcp__core-memory__memory_search",
+      "mcp__core-memory__get_user_profile",
+      "mcp__core-memory__memory_ingest",
+      "Bash(find:*)",
+      "Bash(echo $ENV)",
+      "Bash(python3 -m pytest tests/api/back_office/test_document.py::DocumentDetailViewTest::test_patch_document_name_success -v)",
+      "Bash(pipenv run python -m pytest:*)",
+      "Bash(python3 -m pytest tests/api/back_office/test_document.py -v)",
+      "Read(//Users/martin/bin/**)",
+      "Bash(~/bin/worktree-manager:*)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs",
+      "WebFetch(domain:clustdoc.docs.apiary.io)",
+      "mcp__notionMCP__notion-update-page",
+      "Bash(docker buildx:*)",
+      "Bash(docker version:*)",
+      "Bash(docker build:*)",
+      "Bash(aws ecr list-images:*)",
+      "Bash(aws ecs describe-task-definition:*)",
+      "Bash(aws ecs list-task-definitions:*)",
+      "mcp__serena__find_file",
+      "mcp__sequential-thinking__sequentialthinking",
+      "Bash(aws ecs list-services:*)"
+    ],
+    "deny": [],
+    "ask": []
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo \"🧠 SESSION STARTED: Search memory for context about: $(basename $(pwd)) project, previous conversations, and related work. Do this before responding to user queries.\""
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '💭 CONTEXT SEARCH: Before responding, use memory-search to search for: previous discussions about this topic, related project context, and similar problems solved before. Before this conversation ends, you must use memory-ingest to store: [USER] their question/request + [ASSISTANT] your solution/explanation/reasoning. Do this storage as the very last action.'"
+          }
+        ]
+      }
+    ]
+  }
+}

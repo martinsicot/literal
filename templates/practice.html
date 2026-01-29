@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Practice{% endblock %}
+
+{% block content %}
+<div class="practice-container">
+    <h1>Practice Session</h1>
+
+    <div id="practice-card" class="practice-card" hx-get="/api/session?user_id=1" hx-trigger="load" hx-swap="innerHTML">
+        <div class="loading">Loading sentence...</div>
+    </div>
+
+    <div id="review-buttons" class="review-buttons hidden">
+        <button class="btn btn-danger" onclick="submitReview(0)">Again</button>
+        <button class="btn btn-warning" onclick="submitReview(2)">Hard</button>
+        <button class="btn btn-success" onclick="submitReview(3)">Good</button>
+        <button class="btn btn-primary" onclick="submitReview(5)">Easy</button>
+    </div>
+
+    <div class="practice-info">
+        <p>Rate how well you understood the target word in context:</p>
+        <ul>
+            <li><strong>Again</strong> - Didn't understand at all</li>
+            <li><strong>Hard</strong> - Understood with difficulty</li>
+            <li><strong>Good</strong> - Understood with some effort</li>
+            <li><strong>Easy</strong> - Understood immediately</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentWordId = null;
+let currentSentenceId = null;
+
+// Handle session response
+document.body.addEventListener('htmx:afterSwap', function(evt) {
+    if (evt.detail.target.id === 'practice-card') {
+        const data = JSON.parse(evt.detail.xhr.response);
+        if (data.sentence) {
+            currentWordId = data.target_word.id;
+            currentSentenceId = data.sentence.id;
+            renderPracticeCard(data);
+        }
+    }
+});
+
+function renderPracticeCard(data) {
+    const card = document.getElementById('practice-card');
+    const sentence = data.sentence;
+    const targetWord = data.target_word;
+
+    card.innerHTML = `
+        <div class="sentence-display">
+            <p class="sentence-text">${highlightTarget(sentence.sentence_text, targetWord.word)}</p>
+            <p class="sentence-translation hidden" id="translation">${sentence.translation || 'Translation not available'}</p>
+        </div>
+
+        <div class="target-word-info">
+            <span class="target-label">Target Word:</span>
+            <span class="target-word">${targetWord.word}</span>
+            <span class="target-translation hidden" id="word-translation">${targetWord.translation || '?'}</span>
+        </div>
+
+        <button class="btn btn-secondary" onclick="revealAnswer()">Show Answer</button>
+    `;
+
+    document.getElementById('review-buttons').classList.add('hidden');
+}
+
+function highlightTarget(text, word) {
+    const regex = new RegExp(`(${word})`, 'gi');
+    return text.replace(regex, '<mark class="target-highlight">$1</mark>');
+}
+
+function revealAnswer() {
+    document.getElementById('translation').classList.remove('hidden');
+    document.getElementById('word-translation').classList.remove('hidden');
+    document.getElementById('review-buttons').classList.remove('hidden');
+}
+
+async function submitReview(quality) {
+    if (!currentWordId) return;
+
+    try {
+        const response = await fetch(`/api/reviews?user_id=1`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                word_id: currentWordId,
+                quality: quality,
+                sentence_id: currentSentenceId
+            })
+        });
+
+        if (response.ok) {
+            // Load next sentence
+            htmx.ajax('GET', '/api/session?user_id=1', '#practice-card');
+        }
+    } catch (error) {
+        console.error('Review failed:', error);
+    }
+}
+</script>
+{% endblock %}

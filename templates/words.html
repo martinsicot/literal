@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Words{% endblock %}
+
+{% block content %}
+<div class="words-container">
+    <h1>Vocabulary</h1>
+
+    <div class="filters">
+        <select id="mastery-filter" hx-get="/words" hx-target="#word-list" hx-include="[name='mastery']" name="mastery">
+            <option value="">All Levels</option>
+            <option value="0">New</option>
+            <option value="1">Learning</option>
+            <option value="2">Familiar</option>
+            <option value="3">Known</option>
+            <option value="4">Mature</option>
+        </select>
+
+        <input type="search" id="word-search" placeholder="Search words..."
+               hx-get="/words/search" hx-target="#word-list"
+               hx-trigger="keyup changed delay:300ms" name="q">
+    </div>
+
+    <div id="word-list" hx-get="/api/words?user_id=1&language=eu" hx-trigger="load" hx-swap="innerHTML">
+        <div class="loading">Loading words...</div>
+    </div>
+
+    <div class="pagination" id="pagination">
+        <!-- Pagination will be rendered here -->
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.body.addEventListener('htmx:afterSwap', function(evt) {
+    if (evt.detail.target.id === 'word-list') {
+        const data = JSON.parse(evt.detail.xhr.response);
+        renderWordList(data);
+    }
+});
+
+function renderWordList(data) {
+    const container = document.getElementById('word-list');
+    const words = data.items || [];
+
+    if (words.length === 0) {
+        container.innerHTML = '<p class="no-results">No words found. Import an Anki deck to get started.</p>';
+        return;
+    }
+
+    const masteryColors = {
+        'new': 'mastery-new',
+        'learning': 'mastery-learning',
+        'familiar': 'mastery-familiar',
+        'known': 'mastery-known',
+        'mature': 'mastery-mature'
+    };
+
+    let html = '<table class="word-table"><thead><tr>';
+    html += '<th>Word</th><th>Translation</th><th>Mastery</th><th>Next Review</th><th>Actions</th>';
+    html += '</tr></thead><tbody>';
+
+    words.forEach(word => {
+        const masteryClass = masteryColors[word.mastery_name] || '';
+        const nextReview = word.next_review || 'Not scheduled';
+        const dueClass = word.is_due ? 'due-now' : '';
+
+        html += `<tr class="${dueClass}">
+            <td class="word-cell">${word.word}</td>
+            <td>${word.translation || '-'}</td>
+            <td><span class="mastery-badge ${masteryClass}">${word.mastery_name}</span></td>
+            <td>${nextReview}</td>
+            <td>
+                <button class="btn btn-sm" onclick="practiceWord(${word.id})">Practice</button>
+            </td>
+        </tr>`;
+    });
+
+    html += '</tbody></table>';
+
+    // Pagination
+    const totalPages = data.total_pages || 1;
+    const currentPage = data.page || 1;
+
+    html += '<div class="pagination">';
+    if (currentPage > 1) {
+        html += `<button class="btn btn-sm" hx-get="/api/words?user_id=1&language=eu&page=${currentPage - 1}" hx-target="#word-list">Previous</button>`;
+    }
+    html += `<span>Page ${currentPage} of ${totalPages}</span>`;
+    if (currentPage < totalPages) {
+        html += `<button class="btn btn-sm" hx-get="/api/words?user_id=1&language=eu&page=${currentPage + 1}" hx-target="#word-list">Next</button>`;
+    }
+    html += '</div>';
+
+    container.innerHTML = html;
+    htmx.process(container);
+}
+
+function practiceWord(wordId) {
+    window.location.href = `/practice?word_id=${wordId}`;
+}
+</script>
+{% endblock %}

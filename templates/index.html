@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <h1>Welcome to Literal</h1>
+    <p class="subtitle">Learn vocabulary through comprehensible input using the i+1 method</p>
+
+    <div class="hero-actions">
+        <a href="/practice" class="btn btn-primary" hx-get="/practice" hx-target="#main-content" hx-push-url="true">
+            Start Learning
+        </a>
+        <a href="/import" class="btn btn-secondary" hx-get="/import" hx-target="#main-content" hx-push-url="true">
+            Import Anki Deck
+        </a>
+    </div>
+</div>
+
+<section class="features">
+    <div class="feature-card">
+        <h3>i+1 Method</h3>
+        <p>Sentences are generated with mostly known words plus one new word, making learning natural and effective.</p>
+    </div>
+
+    <div class="feature-card">
+        <h3>Spaced Repetition</h3>
+        <p>SM-2 algorithm tracks your progress and schedules reviews at optimal intervals.</p>
+    </div>
+
+    <div class="feature-card">
+        <h3>Anki Integration</h3>
+        <p>Import your existing Anki decks with review history to continue where you left off.</p>
+    </div>
+
+    <div class="feature-card">
+        <h3>AI-Generated Sentences</h3>
+        <p>Natural sentences created by AI that use your known vocabulary as context.</p>
+    </div>
+</section>
+
+<section class="quick-stats" hx-get="/api/stats?user_id=1" hx-trigger="load" hx-swap="innerHTML">
+    <p class="loading">Loading stats...</p>
+</section>
+{% endblock %}

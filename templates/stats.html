@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Statistics{% endblock %}
+
+{% block content %}
+<div class="stats-container">
+    <h1>Learning Statistics</h1>
+
+    <div id="stats-content" hx-get="/api/stats?user_id=1" hx-trigger="load" hx-swap="innerHTML">
+        <div class="loading">Loading statistics...</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.body.addEventListener('htmx:afterSwap', function(evt) {
+    if (evt.detail.target.id === 'stats-content') {
+        const data = JSON.parse(evt.detail.xhr.response);
+        renderStats(data);
+    }
+});
+
+function renderStats(data) {
+    const container = document.getElementById('stats-content');
+
+    const masteryData = data.words_by_mastery || {};
+
+    container.innerHTML = `
+        <div class="stats-grid">
+            <div class="stat-card stat-highlight">
+                <div class="stat-value">${data.streak_days}</div>
+                <div class="stat-label">Day Streak</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-value">${data.total_words}</div>
+                <div class="stat-label">Total Words</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-value">${data.words_due_today}</div>
+                <div class="stat-label">Due Today</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-value">${data.average_retention.toFixed(1)}%</div>
+                <div class="stat-label">Retention Rate</div>
+            </div>
+        </div>
+
+        <div class="stats-section">
+            <h2>Words by Mastery Level</h2>
+            <div class="mastery-bars">
+                ${renderMasteryBar('New', masteryData.new || 0, data.total_words, 'mastery-new')}
+                ${renderMasteryBar('Learning', masteryData.learning || 0, data.total_words, 'mastery-learning')}
+                ${renderMasteryBar('Familiar', masteryData.familiar || 0, data.total_words, 'mastery-familiar')}
+                ${renderMasteryBar('Known', masteryData.known || 0, data.total_words, 'mastery-known')}
+                ${renderMasteryBar('Mature', masteryData.mature || 0, data.total_words, 'mastery-mature')}
+            </div>
+        </div>
+
+        <div class="stats-section">
+            <h2>Review Activity</h2>
+            <div class="activity-stats">
+                <div class="activity-item">
+                    <span class="activity-value">${data.reviews_today}</span>
+                    <span class="activity-label">Reviews Today</span>
+                </div>
+                <div class="activity-item">
+                    <span class="activity-value">${data.reviews_this_week}</span>
+                    <span class="activity-label">Reviews This Week</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-actions">
+            <a href="/practice" class="btn btn-primary">Start Practice</a>
+            <a href="/words" class="btn btn-secondary">View All Words</a>
+        </div>
+    `;
+}
+
+function renderMasteryBar(label, count, total, colorClass) {
+    const percentage = total > 0 ? (count / total * 100).toFixed(1) : 0;
+    return `
+        <div class="mastery-bar-item">
+            <div class="mastery-bar-label">${label}</div>
+            <div class="mastery-bar-track">
+                <div class="mastery-bar-fill ${colorClass}" style="width: ${percentage}%"></div>
+            </div>
+            <div class="mastery-bar-count">${count} (${percentage}%)</div>
+        </div>
+    `;
+}
+</script>
+{% endblock %}

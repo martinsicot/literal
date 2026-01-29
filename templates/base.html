@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Literal{% endblock %} - i+1 Language Learning</title>
+
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
+    <!-- Minimal CSS -->
+    <link rel="stylesheet" href="/static/css/style.css">
+
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="/" class="logo">Literal</a>
+            <div class="nav-links">
+                <a href="/" hx-get="/" hx-target="#main-content" hx-push-url="true">Home</a>
+                <a href="/words" hx-get="/words" hx-target="#main-content" hx-push-url="true">Words</a>
+                <a href="/practice" hx-get="/practice" hx-target="#main-content" hx-push-url="true">Practice</a>
+                <a href="/stats" hx-get="/stats" hx-target="#main-content" hx-push-url="true">Stats</a>
+                <a href="/import" hx-get="/import" hx-target="#main-content" hx-push-url="true">Import</a>
+            </div>
+        </div>
+    </nav>
+
+    <main id="main-content" class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>Literal - Learn languages with the i+1 method</p>
+        </div>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>
