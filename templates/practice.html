@@ -6,7 +6,7 @@
 <div class="practice-container">
     <h1>Practice Session</h1>
 
-    <div id="practice-card" class="practice-card" hx-get="/api/session?user_id=1" hx-trigger="load" hx-swap="innerHTML">
+    <div id="practice-card" class="practice-card">
         <div class="loading">Loading sentence...</div>
     </div>
 
@@ -34,17 +34,33 @@
 let currentWordId = null;
 let currentSentenceId = null;
 
-// Handle session response
-document.body.addEventListener('htmx:afterSwap', function(evt) {
-    if (evt.detail.target.id === 'practice-card') {
-        const data = JSON.parse(evt.detail.xhr.response);
+// Load session on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadNextSentence();
+});
+
+async function loadNextSentence() {
+    const card = document.getElementById('practice-card');
+    card.innerHTML = '<div class="loading">Loading sentence...</div>';
+
+    try {
+        const response = await fetch('/api/session?user_id=1');
+        if (!response.ok) {
+            const error = await response.json();
+            card.innerHTML = `<div class="error">${error.detail || 'Failed to load sentence'}</div>`;
+            return;
+        }
+        const data = await response.json();
         if (data.sentence) {
             currentWordId = data.target_word.id;
             currentSentenceId = data.sentence.id;
             renderPracticeCard(data);
         }
+    } catch (error) {
+        console.error('Failed to load session:', error);
+        card.innerHTML = '<div class="error">Failed to load sentence. Please try again.</div>';
     }
-});
+}
 
 function renderPracticeCard(data) {
     const card = document.getElementById('practice-card');
@@ -96,7 +112,7 @@ async function submitReview(quality) {
 
         if (response.ok) {
             // Load next sentence
-            htmx.ajax('GET', '/api/session?user_id=1', '#practice-card');
+            loadNextSentence();
         }
     } catch (error) {
         console.error('Review failed:', error);

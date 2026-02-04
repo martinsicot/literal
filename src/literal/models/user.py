@@ -58,6 +58,11 @@ class User(Base):
         "Review",
         back_populates="user",
     )
+    case_progress: Mapped[list["UserCaseProgress"]] = relationship(  # noqa: F821
+        "UserCaseProgress",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self) -> str:
         return f"<User(id={self.id}, username='{self.username}')>"

@@ -144,6 +144,12 @@ class StatsResponse(BaseModel):
     reviews_this_week: int
     average_retention: float
     streak_days: int
+    # Anki-synced vocabulary stats
+    vocabulary_total: int = 0
+    vocabulary_known: int = 0  # interval >= 14 days
+    vocabulary_learning: int = 0  # interval 1-13 days
+    vocabulary_new: int = 0  # interval 0 or not synced
+    anki_avg_interval: float = 0.0
 
 
 # Pagination

@@ -26,6 +26,7 @@ from literal.api.schemas import (
 from literal.models.sentence import Review, Sentence
 from literal.models.user import MasteryLevel, User, UserWordState
 from literal.models.word import Word
+from literal.services.progression import ProgressionService
 
 router = APIRouter()
 
@@ -236,8 +237,24 @@ async def get_session(
     sm2: SM2Dep,
 ) -> dict:
     """Get next sentence for learning session."""
-    # Generate a new sentence
-    sentence = await generator.generate_and_save(user_id)
+    # Get next case to practice from progression service
+    progression = ProgressionService(session)
+    case_and_number = await progression.get_next_case_to_practice(user_id)
+    if not case_and_number:
+        raise HTTPException(
+            status_code=404,
+            detail="No cases available. Seed grammatical cases first.",
+        )
+
+    target_case, target_number = case_and_number
+
+    # Generate a new sentence using the case-aware flow
+    sentence = await generator.generate_and_save_for_case(
+        user_id=user_id,
+        target_case=target_case,
+        target_number=target_number,
+        progression_service=progression,
+    )
 
     if not sentence:
         raise HTTPException(
@@ -437,6 +454,30 @@ async def get_stats(
         else:
             break
 
+    # Anki-synced vocabulary stats from Word table
+    vocab_total_result = await session.execute(select(func.count(Word.id)))
+    vocabulary_total = vocab_total_result.scalar() or 0
+
+    vocab_known_result = await session.execute(
+        select(func.count(Word.id)).where(Word.is_known == True)  # noqa: E712
+    )
+    vocabulary_known = vocab_known_result.scalar() or 0
+
+    vocab_learning_result = await session.execute(
+        select(func.count(Word.id)).where(
+            Word.anki_interval > 0,
+            Word.anki_interval < 14,
+        )
+    )
+    vocabulary_learning = vocab_learning_result.scalar() or 0
+
+    vocabulary_new = vocabulary_total - vocabulary_known - vocabulary_learning
+
+    avg_interval_result = await session.execute(
+        select(func.avg(Word.anki_interval)).where(Word.anki_interval > 0)
+    )
+    anki_avg_interval = avg_interval_result.scalar() or 0.0
+
     return {
         "total_words": total_words,
         "words_by_mastery": words_by_mastery,
@@ -445,4 +486,9 @@ async def get_stats(
         "reviews_this_week": reviews_this_week,
         "average_retention": round(average_retention, 1),
         "streak_days": streak_days,
+        "vocabulary_total": vocabulary_total,
+        "vocabulary_known": vocabulary_known,
+        "vocabulary_learning": vocabulary_learning,
+        "vocabulary_new": vocabulary_new,
+        "anki_avg_interval": round(anki_avg_interval, 1),
     }

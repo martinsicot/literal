@@ -27,36 +27,71 @@ function renderStats(data) {
     const masteryData = data.words_by_mastery || {};
 
     container.innerHTML = `
-        <div class="stats-grid">
-            <div class="stat-card stat-highlight">
-                <div class="stat-value">${data.streak_days}</div>
-                <div class="stat-label">Day Streak</div>
-            </div>
+        <div class="stats-section">
+            <h2>📚 Vocabulary (from Anki)</h2>
+            <div class="stats-grid">
+                <div class="stat-card stat-highlight">
+                    <div class="stat-value">${data.vocabulary_known}</div>
+                    <div class="stat-label">Known Words</div>
+                    <div class="stat-sublabel">interval ≥ 14 days</div>
+                </div>
 
-            <div class="stat-card">
-                <div class="stat-value">${data.total_words}</div>
-                <div class="stat-label">Total Words</div>
-            </div>
+                <div class="stat-card">
+                    <div class="stat-value">${data.vocabulary_learning}</div>
+                    <div class="stat-label">Learning</div>
+                    <div class="stat-sublabel">interval 1-13 days</div>
+                </div>
 
-            <div class="stat-card">
-                <div class="stat-value">${data.words_due_today}</div>
-                <div class="stat-label">Due Today</div>
-            </div>
+                <div class="stat-card">
+                    <div class="stat-value">${data.vocabulary_total}</div>
+                    <div class="stat-label">Total Vocabulary</div>
+                </div>
 
-            <div class="stat-card">
-                <div class="stat-value">${data.average_retention.toFixed(1)}%</div>
-                <div class="stat-label">Retention Rate</div>
+                <div class="stat-card">
+                    <div class="stat-value">${data.anki_avg_interval}</div>
+                    <div class="stat-label">Avg Interval (days)</div>
+                </div>
+            </div>
+            <div class="mastery-bars" style="margin-top: 1rem;">
+                ${renderMasteryBar('Known (≥14d)', data.vocabulary_known, data.vocabulary_total, 'mastery-known')}
+                ${renderMasteryBar('Learning (1-13d)', data.vocabulary_learning, data.vocabulary_total, 'mastery-learning')}
+                ${renderMasteryBar('New (0d)', data.vocabulary_new, data.vocabulary_total, 'mastery-new')}
             </div>
         </div>
 
         <div class="stats-section">
-            <h2>Words by Mastery Level</h2>
+            <h2>📝 Practice Progress</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">${data.streak_days}</div>
+                    <div class="stat-label">Day Streak</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-value">${data.words_due_today}</div>
+                    <div class="stat-label">Due Today</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-value">${data.average_retention.toFixed(1)}%</div>
+                    <div class="stat-label">Retention Rate</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-value">${data.total_words}</div>
+                    <div class="stat-label">Words Practiced</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-section">
+            <h2>Practice Mastery</h2>
             <div class="mastery-bars">
-                ${renderMasteryBar('New', masteryData.new || 0, data.total_words, 'mastery-new')}
-                ${renderMasteryBar('Learning', masteryData.learning || 0, data.total_words, 'mastery-learning')}
-                ${renderMasteryBar('Familiar', masteryData.familiar || 0, data.total_words, 'mastery-familiar')}
-                ${renderMasteryBar('Known', masteryData.known || 0, data.total_words, 'mastery-known')}
-                ${renderMasteryBar('Mature', masteryData.mature || 0, data.total_words, 'mastery-mature')}
+                ${renderMasteryBar('New', masteryData.new || 0, data.total_words || 1, 'mastery-new')}
+                ${renderMasteryBar('Learning', masteryData.learning || 0, data.total_words || 1, 'mastery-learning')}
+                ${renderMasteryBar('Familiar', masteryData.familiar || 0, data.total_words || 1, 'mastery-familiar')}
+                ${renderMasteryBar('Known', masteryData.known || 0, data.total_words || 1, 'mastery-known')}
+                ${renderMasteryBar('Mature', masteryData.mature || 0, data.total_words || 1, 'mastery-mature')}
             </div>
         </div>
 

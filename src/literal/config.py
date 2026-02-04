@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=(".env", ".env.local"),
         env_file_encoding="utf-8",
         case_sensitive=False,
     )
@@ -19,10 +19,14 @@ class Settings(BaseSettings):
 
     # OpenAI
     openai_api_key: str = ""
-    openai_model: str = "gpt-4-turbo-preview"
+    openai_model: str = "gpt-4o-mini"
+
+    # Google Cloud
+    google_cloud_api_key: str = ""
 
     # Application
     debug: bool = False
+    sql_echo: bool = False  # Set to True to see SQL queries
     secret_key: str = "change-me-in-production"
 
     # Language defaults

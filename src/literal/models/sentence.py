@@ -4,7 +4,7 @@ import json
 from datetime import UTC, datetime
 from enum import IntEnum
 
-from sqlalchemy import ForeignKey, Index, Integer, String, Text
+from sqlalchemy import BigInteger, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from literal.models.base import Base
@@ -33,6 +33,9 @@ class Sentence(Base):
 
     Each sentence targets one "unknown" word (the +1) while using
     known words as context, following the i+1 comprehensible input method.
+
+    For Basque learning, sentences are generated with specific grammatical
+    cases and tracked in Anki for spaced repetition.
     """
 
     __tablename__ = "sentences"
@@ -40,14 +43,39 @@ class Sentence(Base):
     # Foreign keys
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     target_word_id: Mapped[int] = mapped_column(ForeignKey("words.id"), nullable=False)
+    target_case_id: Mapped[int | None] = mapped_column(
+        ForeignKey("grammatical_cases.id"), nullable=True
+    )
 
-    # Content
+    # Content - Basque sentence
     sentence_text: Mapped[str] = mapped_column(Text, nullable=False)
-    translation: Mapped[str | None] = mapped_column(Text, nullable=True)
+    translation: Mapped[str | None] = mapped_column(Text, nullable=True)  # Legacy field
     language: Mapped[str] = mapped_column(String(10), nullable=False, default="eu")
+
+    # Content - French translation (for Anki cards)
+    french_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # Grammatical metadata
+    target_number: Mapped[str] = mapped_column(
+        String(20), default="singular"
+    )  # "singular" or "plural"
+    target_form: Mapped[str | None] = mapped_column(
+        String(255), nullable=True
+    )  # Actual surface form used
 
     # Context tracking (JSON array of word IDs used as context)
     context_word_ids_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # Audio paths (TTS generated)
+    audio_basque_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    audio_french_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+    # Anki integration
+    anki_note_id: Mapped[int | None] = mapped_column(
+        BigInteger, nullable=True, index=True
+    )  # Created Anki note
+    anki_interval: Mapped[int] = mapped_column(Integer, default=0)  # Synced from Anki
+    anki_last_review: Mapped[datetime | None] = mapped_column(nullable=True)
 
     # Generation metadata
     model_used: Mapped[str | None] = mapped_column(String(100), nullable=True)
@@ -66,8 +94,16 @@ class Sentence(Base):
         back_populates="sentences",
         foreign_keys=[target_word_id],
     )
+    target_case: Mapped["GrammaticalCase"] = relationship(  # noqa: F821
+        "GrammaticalCase",
+    )
     reviews: Mapped[list["Review"]] = relationship(
         "Review",
+        back_populates="sentence",
+        cascade="all, delete-orphan",
+    )
+    word_usages: Mapped[list["SentenceWord"]] = relationship(  # noqa: F821
+        "SentenceWord",
         back_populates="sentence",
         cascade="all, delete-orphan",
     )
@@ -75,6 +111,8 @@ class Sentence(Base):
     __table_args__ = (
         Index("ix_sentences_user_target", "user_id", "target_word_id"),
         Index("ix_sentences_user_language", "user_id", "language"),
+        Index("ix_sentences_target_case", "target_case_id"),
+        Index("ix_sentences_anki_note", "anki_note_id"),
     )
 
     def __repr__(self) -> str:
@@ -104,6 +142,23 @@ class Sentence(Base):
         if not self.reviews:
             return None
         return sum(r.quality for r in self.reviews) / len(self.reviews)
+
+    @property
+    def has_audio(self) -> bool:
+        """Check if sentence has both audio files generated."""
+        return bool(self.audio_basque_path and self.audio_french_path)
+
+    @property
+    def is_in_anki(self) -> bool:
+        """Check if sentence has been pushed to Anki."""
+        return self.anki_note_id is not None
+
+    @property
+    def case_name(self) -> str | None:
+        """Get the name of the grammatical case used."""
+        if self.target_case:
+            return self.target_case.name
+        return None
 
 
 class Review(Base):
